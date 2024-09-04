@@ -1,28 +1,27 @@
-(* List all possible search strategies with key space [n]. *)
+(* List all possible search strategies with key space[n]. *)
 strategies[n_] := strategies[n] = Module[
    {guess},
-   If[n == 0, {{}},
+   If[n === 0, {{}},
     Join @@ Table[Join @@ Outer[
-        Join[{guess}, #1, #2] &,
+        {guess, #1, #2} &,
         strategies[guess - 1],
         guess + strategies[n - guess],
         1
         ],
       {guess, 1, n}
       ]]]
-
+      
 (* Play out a pure strategy game. *)
 play[key_, strategy_] := Module[
-  {guess = First[strategy], guesses = 1, s = strategy},
-  While[guess =!= key,
-   s = Select[s, If[key < guess, # < guess, # > guess] &];
-   guess = First[s];
-   ++guesses;
-   ];
-  guesses
-  ]
+  {guess, lower, higher},
+  {guess, lower, higher} = strategy;
+  1 + Which[
+    key === guess, 0,
+    key < guess, play[key, lower],
+    key > guess, play[key, higher]
+    ]]
 
-(* Compute value and mixed strategy for row player of zero sum game. *)
+(* Compute Nash equilibrium value and mixed strategy for row player. *)
 (* solve[-Transpose[payoff]] solves for the column player. *)
 solve[payoff_] := Module[
   {m, n, d, x, v},
@@ -40,10 +39,9 @@ solve[payoff_] := Module[
   {v - d, v x}
   ]
 
-(* Compute optimal expected return and mixed strategy for range of n. *)
+(* Compute Alice's strategy for tractable range of n. *)
 Do[
-  payoff = Outer[play, Range[n], strategies[n], 1];
-  {v, p} = solve[payoff];
-  Print[n -> {v, p}],
-  {n, 10}
-  ]
+ payoff = Outer[play, Range[n], strategies[n], 1];
+ Print[n -> solve[payoff]],
+ {n, 1, 13}
+ ]
